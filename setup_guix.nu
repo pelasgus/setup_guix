@@ -1,3 +1,7 @@
+# setup_guix.nu
+# Author: D.A.Pelasgus
+#!/usr/bin/env nu.
+    
 # Set LANG environment variable
 echo "Setting LANG to en_US.utf8"
 $env.GITHUB_ENV | save --append $env.GITHUB_ENV "LANG=en_US.utf8"
