@@ -25,7 +25,7 @@ runs:
 
     - name: Make setup_guix.nu Script Executable
       shell: nu {0}
-      run: chmod +x setup_guix.nu
+      run: sudo chmod +x setup_guix.nu
     - name: Run the script
       shell: nu {0}
       run: ./setup_guix.nu
