@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Install Nushell Using setup_nu
-      uses: pelasgus/setup_nu@v0.1
+      uses: pelasgus/setup_nu@0.1.1
 
     - name: Download setup_guix.nu Script
       shell: nu
