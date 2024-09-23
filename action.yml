@@ -24,7 +24,7 @@ runs:
     - name: Download setup_guix.nu Script
       shell: nu
       run: |
-        wget https://raw.githubusercontent.com/yourusername/setup_guix/main/setup_guix.nu -O setup_guix.nu
+        wget https://raw.githubusercontent.com/pelasgus/setup_guix/main/setup_guix.nu -O setup_guix.nu
 
     - name: Run setup_guix.nu Script
       shell: nu
