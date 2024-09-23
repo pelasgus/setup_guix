@@ -24,7 +24,7 @@ runs:
       uses: hustcer/setup-nu@v3.13
 
     - name: Download setup_guix.nu Script
-      shell: nu
+      shell: nu {0}
       run: ./setup_guix.nu
       
 branding:
