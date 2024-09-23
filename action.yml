@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Install Nushell Using setup_nu
-      uses: pelasgus/setup_nu@main
+      uses: pelasgus/setup_nu@v0.1
       with:
         set-default: true
 
