@@ -2,10 +2,6 @@ name: "setup_guix"
 description: "GitHub Action to install GNU Guix using a Nushell script, leveraging setup_nu to install Nushell if necessary."
 author: "D.A.Pelasgus"
 
-defaults:
-  runs:
-    shell: nu {0}
-
 inputs:
   channels:
     description: 'Guix channel description as Scheme code'
@@ -28,8 +24,10 @@ runs:
       uses: hustcer/setup-nu@v3.13
 
     - name: Make setup_guix.nu Script Executable
+      shell: nu {0}
       run: sudo chmod +x setup_guix.nu
     - name: Run the script
+      shell: nu {0}
       run: ./setup_guix.nu
       
 branding:
