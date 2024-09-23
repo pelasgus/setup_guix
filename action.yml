@@ -1,0 +1,39 @@
+name: "setup_guix"
+description: "GitHub Action to install GNU Guix using a Nushell script, leveraging setup_nu to install Nushell if necessary."
+author: "D.A.Pelasgus"
+inputs:
+  version:
+    description: "Specific version of Guix to install (optional). If not provided, the latest version will be installed."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Nushell Using setup_nu
+      uses: pelasgus/setup_nu@main
+      with:
+        set-default: true
+
+    - name: Install Dependencies
+      shell: nu
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget tar gnupg curl
+
+    - name: Download setup_guix.nu Script
+      shell: nu
+      run: |
+        wget https://raw.githubusercontent.com/yourusername/setup_guix/main/setup_guix.nu -O setup_guix.nu
+
+    - name: Run setup_guix.nu Script
+      shell: nu
+      run: |
+        if ($env.INPUT_VERSION != "") {
+          nu setup_guix.nu $env.INPUT_VERSION
+        } else {
+          nu setup_guix.nu
+        }
+branding:
+  icon: "terminal"
+  color: "purple"
