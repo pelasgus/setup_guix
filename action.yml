@@ -12,14 +12,6 @@ runs:
   steps:
     - name: Install Nushell Using setup_nu
       uses: pelasgus/setup_nu@v0.1
-      with:
-        set-default: true
-
-    - name: Install Dependencies
-      shell: nu
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget tar gnupg curl
 
     - name: Download setup_guix.nu Script
       shell: nu
