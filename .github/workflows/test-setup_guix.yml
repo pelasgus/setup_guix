@@ -1,0 +1,48 @@
+name: Test setup_guix Action
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-setup-guix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Run setup_guix Action (Latest Version)
+        uses: ./ # Uses the current repository's action
+
+      - name: Verify GNU Guix Installation
+        run: |
+          if ! command -v guix &> /dev/null; then
+            echo "GNU Guix was not installed correctly"
+            exit 1
+          fi
+          echo "GNU Guix installation test passed."
+
+      - name: Clean Up
+        run: |
+          sudo rm -rf /usr/local/var/guix /usr/local/bin/guix /usr/local/sbin/guix
+          sudo sed -i '/\/usr\/local\/var\/guix\/profiles\/per-user\/root\/guix-profile\/bin/d' /etc/profile
+          sudo sed -i '/GUIX_LOCPATH/d' /etc/profile
+
+      - name: Run setup_guix Action (Specific Version)
+        uses: ./
+        with:
+          version: "1.3.0" # Replace with a specific version you want to test
+
+      - name: Verify GNU Guix Installation (Specific Version)
+        run: |
+          installed_version=$(guix --version | grep -oP '\d+\.\d+\.\d+')
+          if [ "$installed_version" != "1.3.0" ]; then
+            echo "GNU Guix version $installed_version was installed instead of 1.3.0"
+            exit 1
+          fi
+          echo "GNU Guix version $installed_version installation test passed."
