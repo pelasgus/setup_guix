@@ -1,11 +1,21 @@
 name: "setup_guix"
 description: "GitHub Action to install GNU Guix using a Nushell script, leveraging setup_nu to install Nushell if necessary."
 author: "D.A.Pelasgus"
+
 inputs:
-  version:
-    description: "Specific version of Guix to install (optional). If not provided, the latest version will be installed."
+  channels:
+    description: 'Guix channel description as Scheme code'
     required: false
-    default: ""
+    default: |-
+      %default-channels
+  pullAfterInstall:
+    description: 'Run `guix pull` after installing Guix'
+    required: false
+    default: true
+outputs:
+  channels:
+    description: 'Exact Guix channels that were used for this action.'
+    value: ${{ steps.guix-describe.outputs.channels }}
 
 runs:
   using: "composite"
@@ -15,17 +25,8 @@ runs:
 
     - name: Download setup_guix.nu Script
       shell: nu
-      run: |
-        wget https://raw.githubusercontent.com/pelasgus/setup_guix/main/setup_guix.nu -O setup_guix.nu
-
-    - name: Run setup_guix.nu Script
-      shell: nu
-      run: |
-        if ($env.INPUT_VERSION != "") {
-          nu setup_guix.nu $env.INPUT_VERSION
-        } else {
-          nu setup_guix.nu
-        }
+      run: ./setup_guix.nu
+      
 branding:
   icon: "terminal"
   color: "purple"

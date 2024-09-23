@@ -1,77 +1,52 @@
-# setup_guix.nu
+# Set LANG environment variable
+echo "Setting LANG to en_US.utf8"
+$env.GITHUB_ENV | save --append $env.GITHUB_ENV "LANG=en_US.utf8"
 
-# Check for required dependencies
-if not (which wget) {
-    echo "wget is required but not installed. Please install it first."
-    exit 1
+# Download the GNU Guix tarball
+echo "Downloading GNU Guix tarball"
+wget https://ci.guix.gnu.org/search/latest/archive?query=spec:tarball+status:success+system:x86_64-linux+guix-binary.tar.xz -O guix-binary-nightly.x86_64-linux.tar.xz --no-verbose
+
+# Extract and install Guix
+echo "Installing GNU Guix"
+sudo tar --extract --file "guix-binary-nightly.x86_64-linux.tar.xz" -C / --no-overwrite-dir
+sudo groupadd --system guixbuild
+
+for i in (seq 1 10) {
+    let user_name = $"guixbuilder$(printf '%02d' $i)"
+    sudo useradd -g guixbuild -G guixbuild -d /var/empty -s (which nologin) -c $"Guix build user $i" --system $user_name
 }
 
-if not (which tar) {
-    echo "tar is required but not installed. Please install it first."
-    exit 1
+let guix_path = "/var/guix/profiles/per-user/root/current-guix"
+sudo cp $"${guix_path}/lib/systemd/system/gnu-store.mount" /etc/systemd/system/
+sudo cp $"${guix_path}/lib/systemd/system/guix-daemon.service" /etc/systemd/system/
+sudo chmod 664 /etc/systemd/system/gnu-store.mount /etc/systemd/system/guix-daemon.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now gnu-store.mount guix-daemon.service
+
+echo $"$guix_path/bin" | save --append $env.GITHUB_PATH
+
+# Authorize the build farm
+echo "Authorizing the build farm"
+for file in (ls /var/guix/profiles/per-user/root/current-guix/share/guix/*.pub) {
+    sudo "/var/guix/profiles/per-user/root/current-guix/bin/guix" archive --authorize < $file.path
 }
 
-if not (which gpg) {
-    echo "gpg is required but not installed. Please install it first."
-    exit 1
+# Generate Guix keys
+echo "Generating Guix keys"
+sudo "/var/guix/profiles/per-user/root/current-guix/bin/guix" archive --generate-key
+
+# Create channel file
+echo "Creating Guix channel file"
+let channels_content = $input.channels
+open $env.RUNNER_TEMP/channels.scm --raw --out (nu -c echo $"${channels_content}")
+
+# Update Guix if requested
+if $input.pullAfterInstall == "true" {
+    echo "Updating Guix"
+    sudo "/var/guix/profiles/per-user/root/current-guix/bin/guix" pull --fallback -C $"$env.RUNNER_TEMP/channels.scm"
 }
 
-# Check if a specific version was passed as an argument
-if ($args | empty?) {
-    echo "No version specified. Fetching the latest version of GNU Guix..."
+# Describe channels and export to GitHub output
+echo "Describing Guix channels"
+"/var/guix/profiles/per-user/root/current-guix/bin/guix" describe -f channels | str replace '\n' ' ' | echo | append "channels=" | save --append $env.GITHUB_OUTPUT
 
-    # Fetch the latest version information from the GNU FTP server
-    let latest_version_info = (wget -qO- "https://ftp.gnu.org/gnu/guix/" | from html | select href | where href =~ /guix-binary-[0-9]+\.[0-9]+\.[0-9]+/ | get href | split column '/' | last | regex replace 'guix-binary-([0-9\.]+)\.x86_64-linux\.tar\.xz' '$1')
-    
-    let version = ($latest_version_info | sort-by { $it } -r | first)
-    echo $"Latest version detected: ($version)"
-} else {
-    # Use the specified version
-    let version = ($args | first)
-    echo $"Using specified version: ($version)"
-}
-
-# Define URLs for the tarball and its signature
-let base_url = "https://ftp.gnu.org/gnu/guix"
-let tarball = $"guix-binary-($version).x86_64-linux.tar.xz"
-let signature = $"guix-binary-($version).x86_64-linux.tar.xz.sig"
-
-# Create a temporary directory for the installation process
-let tmp_dir = "/tmp/guix_install"
-mkdir -p $tmp_dir
-cd $tmp_dir
-
-# Download the tarball and its signature
-echo "Downloading GNU Guix binary..."
-wget $"($base_url)/$tarball"
-wget $"($base_url)/$signature"
-
-# Verify the tarball using GPG
-echo "Verifying the tarball with GPG..."
-if not (gpg --verify $signature $tarball) {
-    echo "Verification failed! The tarball may be compromised."
-    exit 1
-}
-
-# Extract the tarball
-echo "Extracting the tarball..."
-tar -xf $tarball
-
-# Install GNU Guix
-echo "Installing GNU Guix..."
-cd $"guix-binary-$version.x86_64-linux"
-sudo ./install.sh
-
-# Add Guix to the PATH
-echo 'export PATH="/usr/local/var/guix/profiles/per-user/root/guix-profile/bin:$PATH"' | sudo tee -a /etc/profile > /dev/null
-echo 'export GUIX_LOCPATH="/usr/local/var/guix/profiles/per-user/root/guix-profile/lib/locale"' | sudo tee -a /etc/profile > /dev/null
-
-# Source the profile for the current session
-source /etc/profile
-
-# Clean up
-echo "Cleaning up..."
-cd /
-rm -rf $tmp_dir
-
-echo "GNU Guix installation is complete!"
