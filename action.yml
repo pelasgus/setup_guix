@@ -3,7 +3,7 @@ description: "GitHub Action to install GNU Guix using a Nushell script, leveragi
 author: "D.A.Pelasgus"
 
 defaults:
-  run:
+  runs:
     shell: nu {0}
 
 inputs:
