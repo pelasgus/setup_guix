@@ -23,11 +23,12 @@ runs:
     - name: Install Nushell Using setup_nu
       uses: hustcer/setup-nu@v3.13
 
-    - name: Download setup_guix.nu Script
+    - name: Make setup_guix.nu Script Executable
       shell: nu {0}
-      run: |
-      chmod +x setup_guix.nu
-      ./setup_guix.nu
+      run: chmod +x setup_guix.nu
+    - name: Run the script
+      shell: nu {0}
+      run: ./setup_guix.nu
       
 branding:
   icon: "terminal"
